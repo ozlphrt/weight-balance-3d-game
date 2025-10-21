@@ -1,0 +1,21 @@
+{
+  "name": "weight-balance",
+  "version": "0.1.0",
+  "description": "A 3D physics-based puzzle game where players stack weighted cubes to build stable towers. Challenge yourself to create stable structures while managing weight distribution in real-time physics simulation.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["3d-game", "physics-simulation", "threejs", "cannon-es", "puzzle-game"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.11"
+  }
+}

@@ -1,0 +1,8 @@
+Model Information:
+* title:	round cube
+* source:	https://sketchfab.com/3d-models/round-cube-807f085ce60d4896a9a8000d6a8999e3
+* author:	e-d3v-x (https://sketchfab.com/e-d3v-x)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
