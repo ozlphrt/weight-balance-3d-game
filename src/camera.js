@@ -11,9 +11,9 @@ export function setupCamera(renderer) {
     100 // Far plane
   );
   
-  // Position camera for optimal game view - higher and better angle
-  camera.position.set(6, 8, 6);
-  camera.lookAt(0, 2, 0); // Look at platform level, not ground level
+  // Position camera for optimal game view - centered on platform
+  camera.position.set(0, 8, 8);
+  camera.lookAt(0, 0, 0); // Look at center of platform
   
   // Setup orbit controls
   setupOrbitControls(camera, renderer);
@@ -32,10 +32,10 @@ function setupOrbitControls(camera, renderer) {
   let currentPanX = 0, currentPanY = 0;
   
   // Camera orbit parameters
-  let radius = 10;
+  let radius = 10; // Distance from center
   const minRadius = 3;
   const maxRadius = 25;
-  const target = new THREE.Vector3(0, 2, 0); // Target platform level
+  const target = new THREE.Vector3(0, 0, 0); // Target center of platform
   
   // Set initial orbit angles for better view
   currentX = Math.PI / 4; // 45 degrees around
@@ -49,8 +49,15 @@ function setupOrbitControls(camera, renderer) {
     const y = Math.sin(currentY) * radius;
     const z = Math.cos(currentY) * Math.sin(currentX) * radius;
     
-    camera.position.set(x + currentPanX, y + currentPanY, z);
-    camera.lookAt(target.x + currentPanX, target.y + currentPanY, target.z);
+    // Set base camera position
+    camera.position.set(x, y, z);
+    camera.lookAt(target.x, target.y, target.z);
+    
+    // Apply panning by translating the camera in its local coordinate system
+    // This moves the camera left/right and up/down relative to its current orientation
+    const panSpeed = 0.5; // Adjust this for pan sensitivity
+    camera.translateX(currentPanX * panSpeed);
+    camera.translateY(currentPanY * panSpeed);
   }
   
   // Mouse event handlers
@@ -92,9 +99,14 @@ function setupOrbitControls(camera, renderer) {
       targetY = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, targetY));
     } else if (isRightMouseDown) {
       // Right click - pan camera
-      const panSpeed = 0.01;
+      const panSpeed = 0.01; // Increased pan speed for better responsiveness
       targetPanX -= deltaX * panSpeed;
       targetPanY += deltaY * panSpeed;
+      
+      // Clamp panning to reasonable bounds
+      const maxPan = 15; // Increased bounds for more panning range
+      targetPanX = Math.max(-maxPan, Math.min(maxPan, targetPanX));
+      targetPanY = Math.max(-maxPan, Math.min(maxPan, targetPanY));
     }
     
     mouseX = event.clientX;
@@ -123,8 +135,9 @@ function setupOrbitControls(camera, renderer) {
   function animate() {
     currentX += (targetX - currentX) * 0.1;
     currentY += (targetY - currentY) * 0.1;
-    currentPanX += (targetPanX - currentPanX) * 0.1;
-    currentPanY += (targetPanY - currentPanY) * 0.1;
+    // Much faster interpolation for panning to make it very responsive
+    currentPanX += (targetPanX - currentPanX) * 0.4;
+    currentPanY += (targetPanY - currentPanY) * 0.4;
     
     updateCameraPosition();
     requestAnimationFrame(animate);

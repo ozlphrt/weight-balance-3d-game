@@ -114,6 +114,10 @@ let frameCount = 0;
 
 // Initialize UI
 export function initializeUI() {
+  console.log('=== INITIALIZING UI ===');
+  console.log('FPS counter element:', document.getElementById('fpsCounter'));
+  console.log('Color scheme selector:', document.getElementById('colorScheme'));
+  
   setupFPSCounter();
   console.log('UI initialized with color scheme selector and FPS counter');
 }
@@ -125,6 +129,15 @@ function setupFPSCounter() {
     console.warn('FPS counter element not found');
     return;
   }
+  
+  console.log('FPS counter element found:', fpsCounter);
+  console.log('FPS counter position:', fpsCounter.style.position);
+  console.log('FPS counter display:', fpsCounter.style.display);
+  
+  // Make sure it's visible
+  fpsCounter.style.display = 'block';
+  fpsCounter.style.visibility = 'visible';
+  fpsCounter.style.opacity = '1';
   
   // Start FPS tracking
   requestAnimationFrame(updateFPS);

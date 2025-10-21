@@ -63,6 +63,11 @@ async function init() {
     isGameRunning = true;
     console.log('Weight Balance initialized successfully!');
     
+    // Add three random cubes at startup (with small delay to ensure everything is ready)
+    setTimeout(() => {
+      addRandomStartupCubes();
+    }, 500);
+    
   } catch (error) {
     console.error('Failed to initialize Weight Balance:', error);
   }
@@ -83,14 +88,17 @@ function createPlatform() {
   mesh.rotation.x = -Math.PI / 2; // Rotate to be horizontal
   mesh.receiveShadow = true;
   
-  // Cannon-es physics body
-  const shape = new CANNON.Plane();
+  // Cannon-es physics body - use a thin box instead of infinite plane
+  const platformSize = 5;
+  const platformThickness = 0.1;
+  const shape = new CANNON.Box(new CANNON.Vec3(platformSize/2, platformThickness/2, platformSize/2));
   const body = new CANNON.Body({ mass: 0 }); // Static body
   body.addShape(shape);
-  body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+  body.position.set(0, -platformThickness/2, 0); // Position slightly below Y=0
   
   return { mesh, body };
 }
+
 
 // Render loop
 function startRenderLoop() {
@@ -121,13 +129,13 @@ function startRenderLoop() {
 // Check if tower has fallen
 function checkTowerStability() {
   const fallenCubes = cubes.filter(cube => 
-    cube.body.position.y < -2 || 
-    Math.abs(cube.body.position.x) > 3 || 
-    Math.abs(cube.body.position.z) > 3
+    cube.body.position.y < -3 || // Fallen well below platform level
+    Math.abs(cube.body.position.x) > 3.5 || // Fallen beyond platform edges with buffer
+    Math.abs(cube.body.position.z) > 3.5    // Fallen beyond platform edges with buffer
   );
   
   if (fallenCubes.length > 0) {
-    console.log('Tower has fallen!');
+    console.log('Game Over! Cube(s) fell off the platform:', fallenCubes.length);
     showRestartButton();
     isGameRunning = false;
   }
@@ -139,6 +147,79 @@ function onCubePlaced(cube) {
   scene.add(cube.mesh);
   physicsWorld.addBody(cube.body);
   console.log(`Cube placed: weight ${cube.weight}`);
+}
+
+// Add random startup cubes that fall one after another
+function addRandomStartupCubes() {
+  console.log('=== STARTUP CUBES FUNCTION CALLED ===');
+  console.log('Scene:', scene);
+  console.log('Physics world:', physicsWorld);
+  console.log('Adding three cubes that fall one after another...');
+  
+  // Base position - center of platform
+  const baseX = 0;
+  const baseZ = 0;
+  const baseY = 4; // Above platform
+  
+  // Function to add a single cube
+  function addSingleCube(cubeIndex) {
+    if (cubeIndex >= 3) return; // Stop after 3 cubes
+    
+    // Random weight (1-5)
+    const weight = Math.floor(Math.random() * 5) + 1;
+    
+    // Very close positions to ensure collision
+    const offsetX = (Math.random() - 0.5) * 0.8; // -0.4 to 0.4
+    const offsetZ = (Math.random() - 0.5) * 0.8; // -0.4 to 0.4
+    const offsetY = Math.random() * 0.5; // 0 to 0.5 (slight height variation)
+    
+    const x = baseX + offsetX;
+    const z = baseZ + offsetZ;
+    const y = baseY + offsetY;
+    
+    // Create cube with position
+    const position = { x, y, z };
+    const cube = createCube(weight, position);
+    
+    // Add some random rotation for more interesting physics
+    const randomRotation = Math.random() * Math.PI * 2;
+    cube.mesh.rotation.y = randomRotation;
+    cube.body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), randomRotation);
+    
+    // Add to scene and physics
+    console.log(`Adding cube ${cubeIndex + 1} to scene and physics...`);
+    scene.add(cube.mesh);
+    physicsWorld.addBody(cube.body);
+    
+    // Add to cubes array
+    cubes.push(cube);
+    
+    console.log(`✅ Added cube ${cubeIndex + 1}: weight ${weight} at (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`);
+    console.log(`Total cubes in array: ${cubes.length}`);
+    
+    // Wait for this cube to land before dropping the next one
+    // Check if cube has landed (Y position close to platform level)
+    const checkLanding = () => {
+      if (cube.body.position.y <= 1.5) { // Close to platform level
+        console.log(`Cube ${cubeIndex + 1} has landed, dropping next cube...`);
+        // Wait a bit more for physics to settle, then drop next cube
+        setTimeout(() => {
+          addSingleCube(cubeIndex + 1);
+        }, 500); // 500ms delay after landing
+      } else {
+        // Check again in 100ms
+        setTimeout(checkLanding, 100);
+      }
+    };
+    
+    // Start checking for landing after a short delay
+    setTimeout(checkLanding, 200);
+  }
+  
+  // Start with the first cube
+  addSingleCube(0);
+  
+  console.log('Sequential startup cubes scheduled!');
 }
 
 // Make color scheme function globally available
