@@ -204,16 +204,28 @@ function addWeightDisplay(mesh, weight) {
     faceContext.textAlign = 'center';
     faceContext.textBaseline = 'middle';
     
-    // Apply transformations based on face orientation
-    // Only flip the faces that were showing upside down numbers
-    if (face.name === 'back') {
-      faceContext.scale(-1, 1); // Flip horizontally
-      faceContext.fillText(weight.toString(), -128, 128);
+    // Apply transformations based on debug test results:
+    // Front: flipX=1, flipY=1 | Back: flipX=1, flipY=1 | Right: flipX=-1, flipY=1
+    // Left: flipX=-1, flipY=1 | Top: flipX=1, flipY=1 | Bottom: flipX=1, flipY=1
+    if (face.name === 'front') {
+      // Front: flipX=1, flipY=1 (no flip)
+      faceContext.fillText(weight.toString(), 128, 128);
+    } else if (face.name === 'back') {
+      // Back: flipX=1, flipY=1 (no flip)
+      faceContext.fillText(weight.toString(), 128, 128);
     } else if (face.name === 'right') {
-      faceContext.scale(-1, 1); // Flip horizontally
+      // Right: flipX=-1, flipY=1 (flip horizontal)
+      faceContext.scale(-1, 1);
       faceContext.fillText(weight.toString(), -128, 128);
-    } else {
-      // Front, left, top, bottom faces - normal orientation
+    } else if (face.name === 'left') {
+      // Left: flipX=-1, flipY=1 (flip horizontal)
+      faceContext.scale(-1, 1);
+      faceContext.fillText(weight.toString(), -128, 128);
+    } else if (face.name === 'top') {
+      // Top: flipX=1, flipY=1 (no flip)
+      faceContext.fillText(weight.toString(), 128, 128);
+    } else if (face.name === 'bottom') {
+      // Bottom: flipX=1, flipY=1 (no flip)
       faceContext.fillText(weight.toString(), 128, 128);
     }
     
