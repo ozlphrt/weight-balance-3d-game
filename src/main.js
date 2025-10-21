@@ -15,6 +15,10 @@ let isGameRunning = false;
 let cubes = [];
 let platform;
 
+// Object pooling for better performance
+let cubePool = [];
+const MAX_POOL_SIZE = 20;
+
 // Game mechanics state
 let gameScore = 0;
 let currentLevel = 1;
@@ -180,9 +184,13 @@ function createPlatform() {
   return { mesh, body };
 }
 
-// Render loop
+// Performance monitoring variables
+let frameCount = 0;
+let lastTime = 0;
+
+// Render loop with performance monitoring
 function startRenderLoop() {
-  function animate() {
+  function animate(currentTime) {
     requestAnimationFrame(animate);
     
     if (!isGameRunning) return;
@@ -206,9 +214,15 @@ function startRenderLoop() {
     if (cubes.length > 0) {
       updateScore();
     }
+    
+    // Performance monitoring (every 120 frames = ~2 seconds)
+    frameCount++;
+    if (frameCount % 120 === 0) {
+      console.log(`Performance: ${cubes.length} total cubes active`);
+    }
   }
   
-  animate();
+  animate(0);
 }
 
 // Check if tower has fallen
@@ -232,6 +246,40 @@ function onCubePlaced(cube) {
   scene.add(cube.mesh);
   physicsWorld.addBody(cube.body);
   console.log(`Cube placed: weight ${cube.weight}`);
+}
+
+// Object pooling functions for better performance
+function getPooledCube(weight, position) {
+  // Try to reuse a cube from the pool
+  for (let i = 0; i < cubePool.length; i++) {
+    const pooledCube = cubePool[i];
+    if (pooledCube.weight === weight) {
+      // Reset the cube
+      pooledCube.mesh.position.set(position.x, position.y, position.z);
+      pooledCube.body.position.set(position.x, position.y, position.z);
+      pooledCube.body.velocity.set(0, 0, 0);
+      pooledCube.body.angularVelocity.set(0, 0, 0);
+      pooledCube.body.wakeUp();
+      
+      // Remove from pool and return
+      cubePool.splice(i, 1);
+      return pooledCube;
+    }
+  }
+  
+  // If no pooled cube available, create new one
+  return createCube(weight, position);
+}
+
+function returnCubeToPool(cube) {
+  if (cubePool.length < MAX_POOL_SIZE) {
+    // Remove from scene and physics world
+    scene.remove(cube.mesh);
+    physicsWorld.removeBody(cube.body);
+    
+    // Add to pool
+    cubePool.push(cube);
+  }
 }
 
 // Add random startup cubes that fall one after another
@@ -314,10 +362,9 @@ window.changeColorScheme = changeColorScheme;
 window.restartGame = function() {
   console.log('Restarting game...');
   
-  // Remove all cubes
+  // Return all cubes to pool instead of destroying them
   cubes.forEach(cube => {
-    scene.remove(cube.mesh);
-    physicsWorld.removeBody(cube.body);
+    returnCubeToPool(cube);
   });
   cubes = [];
   
@@ -337,7 +384,7 @@ window.restartGame = function() {
   // Resume game
   isGameRunning = true;
   
-  console.log('Game restarted! Starting Level 1 - Target Weight: 8');
+  console.log(`Game restarted! Starting Level 1 - Target Weight: 8. Pool size: ${cubePool.length}`);
 };
 
 // Add keyboard controls
@@ -610,6 +657,18 @@ function hideLevelObjective() {
 
 // Make hideLevelObjective globally accessible
 window.hideLevelObjective = hideLevelObjective;
+
+// Add backup event listener for OK button
+document.addEventListener('DOMContentLoaded', () => {
+  const okButton = document.getElementById('objectiveOK');
+  if (okButton) {
+    okButton.addEventListener('click', (e) => {
+      console.log('OK button clicked via event listener!');
+      e.preventDefault();
+      hideLevelObjective();
+    });
+  }
+});
 
 // Handle window resize
 function onWindowResize() {

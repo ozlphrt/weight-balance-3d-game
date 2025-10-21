@@ -5,12 +5,12 @@ import * as CANNON from 'cannon-es';
 export function createPhysicsWorld() {
   const world = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0), // Earth gravity
-    broadphase: new CANNON.NaiveBroadphase(),
+    broadphase: new CANNON.NaiveBroadphase(), // Reverted to stable version
     solver: new CANNON.GSSolver()
   });
   
   // Configure solver
-  world.solver.iterations = 10;
+  world.solver.iterations = 10; // Reverted to original
   world.solver.tolerance = 0.1;
   
   // Configure broadphase
