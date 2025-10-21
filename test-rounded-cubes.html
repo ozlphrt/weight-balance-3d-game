@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharp vs Rounded Cubes Visual Test - Weight Balance</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1A1A2E;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>Text Orientation Debug Test</h3>
+        <p>Testing each face with different transformations</p>
+        <p>Mouse: Rotate camera to see all faces</p>
+        <p>Look for which numbers appear correctly oriented</p>
+    </div>
+    
+    <div id="controls">
+        <p><strong>Controls:</strong></p>
+        <p>Mouse: Rotate camera</p>
+        <p>Wheel: Zoom in/out</p>
+        <p>Space: Toggle auto-rotation</p>
+    </div>
+
+    <script type="module">
+        // Import Three.js from local project
+        import * as THREE from './node_modules/three/build/three.module.js';
+        
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1A1A2E);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Platform
+        const platformGeometry = new THREE.PlaneGeometry(20, 20);
+        const platformMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x228B22, // Vegas green
+            shininess: 10,
+            specular: 0x111111,
+            transparent: true,
+            opacity: 0.9
+        });
+        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+        platform.rotation.x = -Math.PI / 2;
+        platform.receiveShadow = true;
+        scene.add(platform);
+        
+        // Weight specifications
+        const WEIGHT_COLORS = {
+            1: 0x87CEEB, // Light blue
+            2: 0x90EE90, // Light green
+            3: 0xFFFF00, // Yellow
+            4: 0xFFA500, // Orange
+            5: 0xFF4500  // Red
+        };
+        
+        const WEIGHT_SIZES = {
+            1: 0.4, // Small
+            2: 0.5, // Slightly larger
+            3: 0.6, // Medium
+            4: 0.7, // Larger
+            5: 0.8  // Largest
+        };
+        
+        // Create sharp-edged cubes (current stable version)
+        const cubes = [];
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+        
+        // Create a single test cube with different transformations on each face
+        const size = 1;
+        const geometry = new THREE.BoxGeometry(size, size, size);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x666666,
+            shininess: 30,
+            specular: 0x222222,
+            transparent: true,
+            opacity: 0.3
+        });
+        
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, size/2, 0);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        
+        // Add test numbers to all faces with different transformations
+        addTestWeightDisplay(cube, size);
+        
+        cubeGroup.add(cube);
+        cubes.push(cube);
+        
+        // Function to add test numbers with different transformations
+        function addTestWeightDisplay(mesh, size) {
+            const textColorHex = '#ffffff';
+            const textGeometry = new THREE.PlaneGeometry(size * 0.95, size * 0.95);
+            
+            const faces = [
+                { pos: [0, 0, size/2 + 0.01], rot: [0, 0, 0], name: 'front', test: '1', color: 'red' },
+                { pos: [0, 0, -size/2 - 0.01], rot: [0, Math.PI, 0], name: 'back', test: '2', color: 'blue' },
+                { pos: [size/2 + 0.01, 0, 0], rot: [0, -Math.PI/2, 0], name: 'right', test: '3', color: 'green' },
+                { pos: [-size/2 - 0.01, 0, 0], rot: [0, Math.PI/2, 0], name: 'left', test: '4', color: 'yellow' },
+                { pos: [0, size/2 + 0.01, 0], rot: [-Math.PI/2, 0, 0], name: 'top', test: '5', color: 'purple' },
+                { pos: [0, -size/2 - 0.01, 0], rot: [Math.PI/2, 0, 0], name: 'bottom', test: '6', color: 'orange' }
+            ];
+            
+            faces.forEach((face, index) => {
+                const faceCanvas = document.createElement('canvas');
+                const faceContext = faceCanvas.getContext('2d');
+                faceCanvas.width = 256;
+                faceCanvas.height = 256;
+                
+                faceContext.fillStyle = face.color;
+                faceContext.font = 'bold 120px Arial';
+                faceContext.textAlign = 'center';
+                faceContext.textBaseline = 'middle';
+                
+                // Test different transformations
+                if (index === 0) {
+                    // Front: No flip
+                    faceContext.fillText(face.test, 128, 128);
+                } else if (index === 1) {
+                    // Back: Horizontal flip
+                    faceContext.scale(-1, 1);
+                    faceContext.fillText(face.test, -128, 128);
+                } else if (index === 2) {
+                    // Right: Vertical flip
+                    faceContext.scale(1, -1);
+                    faceContext.fillText(face.test, 128, -128);
+                } else if (index === 3) {
+                    // Left: Both flips
+                    faceContext.scale(-1, -1);
+                    faceContext.fillText(face.test, -128, -128);
+                } else if (index === 4) {
+                    // Top: No flip
+                    faceContext.fillText(face.test, 128, 128);
+                } else {
+                    // Bottom: Horizontal flip
+                    faceContext.scale(-1, 1);
+                    faceContext.fillText(face.test, -128, 128);
+                }
+                
+                const faceTexture = new THREE.CanvasTexture(faceCanvas);
+                const textMaterial = new THREE.MeshBasicMaterial({
+                    map: faceTexture,
+                    transparent: true,
+                    alphaTest: 0.1,
+                    side: THREE.DoubleSide
+                });
+                
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.set(face.pos[0], face.pos[1], face.pos[2]);
+                textMesh.rotation.set(face.rot[0], face.rot[1], face.rot[2]);
+                mesh.add(textMesh);
+            });
+        }
+
+        // Function to add weight numbers to cube faces
+        function addWeightDisplay(mesh, weight, size) {
+            const cubeColor = new THREE.Color(WEIGHT_COLORS[weight]);
+            const textColor = cubeColor.clone().multiplyScalar(1.5);
+            const textColorHex = '#' + textColor.getHexString();
+            
+            const textGeometry = new THREE.PlaneGeometry(size * 0.95, size * 0.95);
+            
+            const faces = [
+                { pos: [0, 0, size/2 + 0.01], rot: [0, 0, 0], name: 'front' },
+                { pos: [0, 0, -size/2 - 0.01], rot: [0, Math.PI, 0], name: 'back' },
+                { pos: [size/2 + 0.01, 0, 0], rot: [0, -Math.PI/2, 0], name: 'right' },
+                { pos: [-size/2 - 0.01, 0, 0], rot: [0, Math.PI/2, 0], name: 'left' },
+                { pos: [0, size/2 + 0.01, 0], rot: [-Math.PI/2, 0, 0], name: 'top' },
+                { pos: [0, -size/2 - 0.01, 0], rot: [Math.PI/2, 0, 0], name: 'bottom' }
+            ];
+            
+            faces.forEach((face) => {
+                const faceCanvas = document.createElement('canvas');
+                const faceContext = faceCanvas.getContext('2d');
+                faceCanvas.width = 256;
+                faceCanvas.height = 256;
+                
+                faceContext.fillStyle = textColorHex;
+                faceContext.font = 'bold 120px Arial';
+                faceContext.textAlign = 'center';
+                faceContext.textBaseline = 'middle';
+                
+                // Fix text orientation - only flip specific faces that need it
+                if (face.name === 'back' || face.name === 'right') {
+                    faceContext.scale(-1, 1);
+                    faceContext.fillText(weight.toString(), -128, 128);
+                } else {
+                    // Front, left, top, bottom faces - normal orientation
+                    faceContext.fillText(weight.toString(), 128, 128);
+                }
+                
+                const faceTexture = new THREE.CanvasTexture(faceCanvas);
+                const textMaterial = new THREE.MeshBasicMaterial({
+                    map: faceTexture,
+                    transparent: true,
+                    alphaTest: 0.1,
+                    side: THREE.DoubleSide
+                });
+                
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.set(face.pos[0], face.pos[1], face.pos[2]);
+                textMesh.rotation.set(face.rot[0], face.rot[1], face.rot[2]);
+                mesh.add(textMesh);
+            });
+        }
+        
+        // Camera controls
+        let isMouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let currentRotationX = 0, currentRotationY = 0;
+        let autoRotate = true;
+        let cameraDistance = 10;
+        
+        // Mouse controls
+        renderer.domElement.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        renderer.domElement.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        
+        renderer.domElement.addEventListener('mousemove', (event) => {
+            if (isMouseDown) {
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                targetRotationY += deltaX * 0.01;
+                targetRotationX += deltaY * 0.01;
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            }
+        });
+        
+        // Wheel zoom
+        renderer.domElement.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            cameraDistance += event.deltaY * 0.01;
+            cameraDistance = Math.max(5, Math.min(25, cameraDistance));
+        });
+        
+        // Space to toggle auto-rotation
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                autoRotate = !autoRotate;
+                console.log('Auto-rotation:', autoRotate ? 'ON' : 'OFF');
+            }
+        });
+        
+        // Position camera
+        camera.position.set(0, 5, 10);
+        camera.lookAt(0, 0, 0);
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Auto-rotation
+            if (autoRotate) {
+                targetRotationY += 0.005;
+            }
+            
+            // Smooth camera rotation
+            currentRotationX += (targetRotationX - currentRotationX) * 0.1;
+            currentRotationY += (targetRotationY - currentRotationY) * 0.1;
+            
+            // Update camera position
+            camera.position.x = Math.sin(currentRotationY) * Math.cos(currentRotationX) * cameraDistance;
+            camera.position.y = Math.sin(currentRotationX) * cameraDistance + 2;
+            camera.position.z = Math.cos(currentRotationY) * Math.cos(currentRotationX) * cameraDistance;
+            camera.lookAt(0, 0, 0);
+            
+            // Rotate cubes slightly for better visibility
+            cubeGroup.rotation.y += 0.005;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start animation
+        animate();
+        
+        console.log('Sharp Cubes Visual Test loaded successfully!');
+        console.log('Use mouse to rotate camera, wheel to zoom, space to toggle auto-rotation');
+    </script>
+</body>
+</html>

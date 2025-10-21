@@ -7,6 +7,7 @@ import { setupCamera } from './camera.js';
 import { createCube, loadCubeModel } from './cubes.js';
 import { setupPlacement } from './placement.js';
 import { showRestartButton, hideRestartButton } from './utils.js';
+import { initializeUI, changeColorScheme, clearRegisteredMeshes } from './ui.js';
 
 // Global application state
 let scene, renderer, camera, physicsWorld;
@@ -50,6 +51,9 @@ async function init() {
     // Setup placement system
     setupPlacement(scene, camera, renderer, physicsWorld, onCubePlaced);
     
+    // Initialize UI (color schemes and FPS counter)
+    initializeUI();
+    
     // Start render loop
     startRenderLoop();
     
@@ -68,10 +72,10 @@ async function init() {
 function createPlatform() {
   // Three.js mesh
   const geometry = new THREE.PlaneGeometry(5, 5);
-  const material = new THREE.MeshPhongMaterial({ 
-    color: 0x228B22, // Vegas green
-    shininess: 10,
-    specular: 0x111111,
+  const material = new THREE.MeshStandardMaterial({ 
+    color: 0x1A5A1A, // Darker, less saturated green
+    metalness: 0.0,        // Non-metallic surface
+    roughness: 1.0,        // Maximum roughness for gaming cloth (no reflection)
     transparent: true,
     opacity: 0.9
   });
@@ -137,6 +141,9 @@ function onCubePlaced(cube) {
   console.log(`Cube placed: weight ${cube.weight}`);
 }
 
+// Make color scheme function globally available
+window.changeColorScheme = changeColorScheme;
+
 // Restart game
 window.restartGame = function() {
   console.log('Restarting game...');
@@ -147,6 +154,9 @@ window.restartGame = function() {
     physicsWorld.removeBody(cube.body);
   });
   cubes = [];
+  
+  // Clear registered meshes for UI
+  clearRegisteredMeshes();
   
   // Hide restart button
   hideRestartButton();

@@ -2,15 +2,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createCubePhysicsBody } from './physics.js';
+import { registerCubeMesh, getCurrentColorScheme } from './ui.js';
 
-// Weight-to-color mapping
-const WEIGHT_COLORS = {
-  1: 0x87CEEB, // Light blue
-  2: 0x90EE90, // Light green
-  3: 0xFFFF00, // Yellow
-  4: 0xFFA500, // Orange
-  5: 0xFF4500  // Red
-};
+// Get current color scheme
+function getWeightColors() {
+  return getCurrentColorScheme().colors;
+}
 
 // Weight-to-size mapping
 const WEIGHT_SIZES = {
@@ -109,8 +106,8 @@ function createCubeMesh(weight) {
       if (child.material) {
         // Handle different material types
         if (child.material.color) {
-          child.material.color.setHex(WEIGHT_COLORS[weight]);
-          console.log('Set color to:', WEIGHT_COLORS[weight]);
+          child.material.color.setHex(getWeightColors()[weight]);
+          console.log('Set color to:', getWeightColors()[weight]);
         }
         
         // Set material properties safely
@@ -140,18 +137,23 @@ function createFallbackCubeMesh(weight) {
   const size = WEIGHT_SIZES[weight];
   const geometry = new THREE.BoxGeometry(size, size, size);
   
-  // Professional material with better lighting response
-  const material = new THREE.MeshPhongMaterial({ 
-    color: WEIGHT_COLORS[weight],
-    shininess: 30,
-    specular: 0x222222,
-    transparent: true,
-    opacity: 0.95
+  // PBR material with realistic lighting response
+  const material = new THREE.MeshStandardMaterial({ 
+    color: getWeightColors()[weight],
+    metalness: 0.1,        // Slight metallic look
+    roughness: 0.3,        // Smooth but not mirror-like
+    transparent: false     // Solid cubes, no transparency
   });
   
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
+  
+  // Add weight display
+  addWeightDisplay(mesh, weight);
+  
+  // Register mesh for color scheme updates
+  registerCubeMesh(mesh, weight);
   
   return mesh;
 }
@@ -159,10 +161,20 @@ function createFallbackCubeMesh(weight) {
 // Add weight number display on all cube faces
 function addWeightDisplay(mesh, weight) {
   const size = WEIGHT_SIZES[weight];
-  const cubeColor = new THREE.Color(WEIGHT_COLORS[weight]);
+  const cubeColor = new THREE.Color(getWeightColors()[weight]);
   
-  // Create brighter version of cube color for text
-  const textColor = cubeColor.clone().multiplyScalar(1.5);
+  // Calculate brightness to determine if we need light or dark text
+  const brightness = (cubeColor.r * 299 + cubeColor.g * 587 + cubeColor.b * 114) / 1000;
+  let textColor;
+  
+  if (brightness > 0.5) {
+    // Light cube - use dark text
+    textColor = cubeColor.clone().multiplyScalar(0.3);
+  } else {
+    // Dark cube - use light text
+    textColor = cubeColor.clone().add(new THREE.Color(0.7, 0.7, 0.7));
+  }
+  
   const textColorHex = '#' + textColor.getHexString();
   
   // Create text canvas - make it bigger
@@ -241,6 +253,7 @@ function addWeightDisplay(mesh, weight) {
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
     textMesh.position.set(face.pos[0], face.pos[1], face.pos[2]);
     textMesh.rotation.set(face.rot[0], face.rot[1], face.rot[2]);
+    textMesh.userData.faceName = face.name; // Store face name for UI updates
     mesh.add(textMesh);
   });
 }

@@ -10,11 +10,29 @@
   <div id="app">
     <canvas id="gameCanvas"></canvas>
     <div id="ui">
-      <div id="restartButton" class="hidden">
-        <button onclick="restartGame()">Restart</button>
+      <div id="controls">
+        <div id="colorSchemeSelector">
+          <label for="colorScheme">Color Scheme:</label>
+          <select id="colorScheme" onchange="changeColorScheme(this.value)">
+            <option value="professional">Professional Gaming</option>
+            <option value="weight">Weight Progression</option>
+            <option value="material">Material Design</option>
+            <option value="monochrome">Monochromatic</option>
+            <option value="neon">Neon Cyberpunk</option>
+            <option value="earth">Earth Tones</option>
+            <option value="ocean">Ocean Depths</option>
+            <option value="sunset">Sunset Gradient</option>
+            <option value="forest">Forest Green</option>
+            <option value="royal">Royal Purple</option>
+          </select>
+        </div>
+        <div id="restartButton" class="hidden">
+          <button onclick="restartGame()">Restart</button>
+        </div>
       </div>
+      <div id="fpsCounter">FPS: --</div>
     </div>
   </div>
-          <script type="module" src="/src/main.js?v=32"></script>
+          <script type="module" src="/src/main.js?v=38"></script>
 </body>
 </html>
