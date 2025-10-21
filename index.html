@@ -11,6 +11,24 @@
     <canvas id="gameCanvas"></canvas>
     <div id="ui">
       <div id="controls">
+        <div id="gameInfo">
+          <div id="levelDisplay">
+            <div class="metric-label">Level</div>
+            <div class="metric-value metric-highlight">1</div>
+          </div>
+                  <div id="heightDisplay">
+                    <div class="metric-label">Weight</div>
+                    <div class="metric-value">0</div>
+                  </div>
+                  <div id="targetDisplay">
+                    <div class="metric-label">Target</div>
+                    <div class="metric-value">8</div>
+                  </div>
+          <div id="scoreDisplay">
+            <div class="metric-label">Score</div>
+            <div class="metric-value metric-highlight">0</div>
+          </div>
+        </div>
         <div id="colorSchemeSelector">
           <label for="colorScheme">Color Scheme:</label>
           <select id="colorScheme" onchange="changeColorScheme(this.value)">
@@ -30,9 +48,17 @@
       <div id="restartButton" class="hidden">
         <button onclick="restartGame()">Restart</button>
       </div>
+      <div id="levelObjective" class="hidden">
+        <div id="objectiveContent">
+          <h2 id="objectiveTitle">Level 1</h2>
+          <p id="objectiveText">Build a tower 3.0 units high!</p>
+          <p id="objectiveHint">Use cubes strategically to reach the target height.</p>
+          <button id="objectiveOK" onclick="hideLevelObjective()">OK</button>
+        </div>
+      </div>
       <div id="fpsCounter">FPS: --</div>
     </div>
   </div>
-          <script type="module" src="/src/main.js?v=63"></script>
+          <script type="module" src="/src/main.js?v=89"></script>
 </body>
 </html>

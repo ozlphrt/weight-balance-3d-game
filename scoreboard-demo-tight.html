@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tight Mobile Scoreboard Mockups</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .demo-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .demo-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .demo-title {
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    
+    /* Version 1: Horizontal Compact */
+    .tight-horizontal {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .tight-h-metric {
+      text-align: center;
+      flex: 1;
+    }
+    
+    .tight-h-label {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .tight-h-value {
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .tight-h-highlight {
+      color: #4CAF50;
+    }
+    
+    /* Version 2: Grid Compact */
+    .tight-grid {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .tight-g-metric {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    
+    .tight-g-label {
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .tight-g-value {
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .tight-g-highlight {
+      color: #4CAF50;
+    }
+    
+    /* Version 3: Pill Style */
+    .tight-pill {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 8px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .tight-p-metric {
+      display: flex;
+      align-items: center;
+      margin-right: 12px;
+    }
+    
+    .tight-p-metric:last-child {
+      margin-right: 0;
+    }
+    
+    .tight-p-label {
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-right: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .tight-p-value {
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .tight-p-highlight {
+      color: #4CAF50;
+    }
+    
+    /* Version 4: Minimal Bars */
+    .tight-bars {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .tight-b-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding: 4px 0;
+    }
+    
+    .tight-b-metric:last-child {
+      margin-bottom: 0;
+    }
+    
+    .tight-b-label {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .tight-b-value {
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .tight-b-highlight {
+      color: #4CAF50;
+    }
+    
+    /* Version 5: Compact Cards */
+    .tight-cards {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .tight-c-metric {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px 8px;
+      text-align: center;
+      flex: 1;
+      min-width: 60px;
+    }
+    
+    .tight-c-label {
+      font-size: 7px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 1px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .tight-c-value {
+      font-size: 10px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .tight-c-highlight {
+      color: #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    
+    <!-- Version 1: Horizontal Compact -->
+    <div class="demo-card">
+      <div class="demo-title">Version 1: Horizontal Compact</div>
+      <div class="tight-horizontal">
+        <div class="tight-h-metric">
+          <div class="tight-h-label">Level</div>
+          <div class="tight-h-value tight-h-highlight">2</div>
+        </div>
+        <div class="tight-h-metric">
+          <div class="tight-h-label">Height</div>
+          <div class="tight-h-value">2.3</div>
+        </div>
+        <div class="tight-h-metric">
+          <div class="tight-h-label">Target</div>
+          <div class="tight-h-value">4.0</div>
+        </div>
+        <div class="tight-h-metric">
+          <div class="tight-h-label">Score</div>
+          <div class="tight-h-value tight-h-highlight">156</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Version 2: Grid Compact -->
+    <div class="demo-card">
+      <div class="demo-title">Version 2: Grid Compact</div>
+      <div class="tight-grid">
+        <div class="tight-g-metric">
+          <div class="tight-g-label">Level</div>
+          <div class="tight-g-value tight-g-highlight">2</div>
+        </div>
+        <div class="tight-g-metric">
+          <div class="tight-g-label">Height</div>
+          <div class="tight-g-value">2.3</div>
+        </div>
+        <div class="tight-g-metric">
+          <div class="tight-g-label">Target</div>
+          <div class="tight-g-value">4.0</div>
+        </div>
+        <div class="tight-g-metric">
+          <div class="tight-g-label">Score</div>
+          <div class="tight-g-value tight-g-highlight">156</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Version 3: Pill Style -->
+    <div class="demo-card">
+      <div class="demo-title">Version 3: Pill Style</div>
+      <div class="tight-pill">
+        <div class="tight-p-metric">
+          <div class="tight-p-label">L</div>
+          <div class="tight-p-value tight-p-highlight">2</div>
+        </div>
+        <div class="tight-p-metric">
+          <div class="tight-p-label">H</div>
+          <div class="tight-p-value">2.3</div>
+        </div>
+        <div class="tight-p-metric">
+          <div class="tight-p-label">T</div>
+          <div class="tight-p-value">4.0</div>
+        </div>
+        <div class="tight-p-metric">
+          <div class="tight-p-label">S</div>
+          <div class="tight-p-value tight-p-highlight">156</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Version 4: Minimal Bars -->
+    <div class="demo-card">
+      <div class="demo-title">Version 4: Minimal Bars</div>
+      <div class="tight-bars">
+        <div class="tight-b-metric">
+          <div class="tight-b-label">Level</div>
+          <div class="tight-b-value tight-b-highlight">2</div>
+        </div>
+        <div class="tight-b-metric">
+          <div class="tight-b-label">Height</div>
+          <div class="tight-b-value">2.3</div>
+        </div>
+        <div class="tight-b-metric">
+          <div class="tight-b-label">Target</div>
+          <div class="tight-b-value">4.0</div>
+        </div>
+        <div class="tight-b-metric">
+          <div class="tight-b-label">Score</div>
+          <div class="tight-b-value tight-b-highlight">156</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Version 5: Compact Cards -->
+    <div class="demo-card">
+      <div class="demo-title">Version 5: Compact Cards</div>
+      <div class="tight-cards">
+        <div class="tight-c-metric">
+          <div class="tight-c-label">Level</div>
+          <div class="tight-c-value tight-c-highlight">2</div>
+        </div>
+        <div class="tight-c-metric">
+          <div class="tight-c-label">Height</div>
+          <div class="tight-c-value">2.3</div>
+        </div>
+        <div class="tight-c-metric">
+          <div class="tight-c-label">Target</div>
+          <div class="tight-c-value">4.0</div>
+        </div>
+        <div class="tight-c-metric">
+          <div class="tight-c-label">Score</div>
+          <div class="tight-c-value tight-c-highlight">156</div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

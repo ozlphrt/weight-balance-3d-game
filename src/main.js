@@ -15,6 +15,13 @@ let isGameRunning = false;
 let cubes = [];
 let platform;
 
+// Game mechanics state
+let gameScore = 0;
+let currentLevel = 1;
+let targetWeight = 8; // Target total weight for current level
+let gameStartTime = 0;
+let isGameWon = false;
+
 // Initialize the application
 async function init() {
   console.log('Initializing Weight Balance...');
@@ -61,7 +68,13 @@ async function init() {
     window.addEventListener('resize', onWindowResize);
     
     isGameRunning = true;
+    gameStartTime = Date.now();
     console.log('Weight Balance initialized successfully!');
+    
+    // Show initial level objective
+    setTimeout(() => {
+      showLevelObjective();
+    }, 1000);
     
     // Add three random cubes at startup (with small delay to ensure everything is ready)
     setTimeout(() => {
@@ -75,30 +88,97 @@ async function init() {
 
 // Create the base platform
 function createPlatform() {
-  // Three.js mesh
-  const geometry = new THREE.PlaneGeometry(5, 5);
-  const material = new THREE.MeshStandardMaterial({ 
-    color: 0x1A5A1A, // Darker, less saturated green
-    metalness: 0.0,        // Non-metallic surface
-    roughness: 1.0,        // Maximum roughness for gaming cloth (no reflection)
-    transparent: true,
-    opacity: 0.9
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-  mesh.receiveShadow = true;
+  // Three.js mesh with rounded box geometry
+  const platformSize = 5; // Back to original size
+  const platformThickness = 0.3; // Increased thickness for better visual appeal
+  const cornerRadius = 0.5; // Rounded corners
   
-  // Cannon-es physics body - use a thin box instead of infinite plane
-  const platformSize = 5;
-  const platformThickness = 0.1;
+  // Create rounded box geometry
+  const geometry = new THREE.BoxGeometry(
+    platformSize, 
+    platformThickness, 
+    platformSize,
+    8, // width segments
+    2, // height segments  
+    8  // depth segments
+  );
+  
+  // Create smooth rounded corners using a better algorithm
+  const positionAttribute = geometry.getAttribute('position');
+  const positions = positionAttribute.array;
+  
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
+    
+    // Only modify vertices on the top and bottom faces
+    if (Math.abs(y) > platformThickness/2 - 0.01) {
+      const halfSize = platformSize / 2;
+      
+      // Calculate distance from each corner
+      const cornerDistances = [
+        Math.sqrt((x - halfSize) * (x - halfSize) + (z - halfSize) * (z - halfSize)), // Top-right
+        Math.sqrt((x + halfSize) * (x + halfSize) + (z - halfSize) * (z - halfSize)), // Top-left
+        Math.sqrt((x - halfSize) * (x - halfSize) + (z + halfSize) * (z + halfSize)), // Bottom-right
+        Math.sqrt((x + halfSize) * (x + halfSize) + (z + halfSize) * (z + halfSize))  // Bottom-left
+      ];
+      
+      // Find the closest corner
+      const minDistance = Math.min(...cornerDistances);
+      
+      // If we're in a corner region, apply rounding
+      if (minDistance < cornerRadius) {
+        const cornerIndex = cornerDistances.indexOf(minDistance);
+        let cornerX, cornerZ;
+        
+        switch (cornerIndex) {
+          case 0: cornerX = halfSize; cornerZ = halfSize; break;  // Top-right
+          case 1: cornerX = -halfSize; cornerZ = halfSize; break; // Top-left
+          case 2: cornerX = halfSize; cornerZ = -halfSize; break; // Bottom-right
+          case 3: cornerX = -halfSize; cornerZ = -halfSize; break; // Bottom-left
+        }
+        
+        // Calculate direction from corner to vertex
+        const dx = x - cornerX;
+        const dz = z - cornerZ;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        if (distance > 0) {
+          // Normalize and scale to corner radius
+          const normalizedX = dx / distance;
+          const normalizedZ = dz / distance;
+          
+          positions[i] = cornerX + normalizedX * cornerRadius;
+          positions[i + 2] = cornerZ + normalizedZ * cornerRadius;
+        }
+      }
+    }
+  }
+  
+  geometry.computeVertexNormals(); // Recalculate normals for smooth lighting
+  
+  const material = new THREE.MeshStandardMaterial({ 
+    color: 0x006622, // Darker, more saturated green
+    metalness: 0.0,        // Non-metallic surface
+    roughness: 0.8,        // Slightly less rough for more appeal
+    transparent: false,    // Solid, no transparency
+    opacity: 1.0
+  });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.y = -platformThickness/2; // Position so top is at Y=0
+  mesh.receiveShadow = true;
+  mesh.castShadow = true; // Platform can cast shadows too
+  
+  // Cannon-es physics body - use a box that matches the visual thickness
   const shape = new CANNON.Box(new CANNON.Vec3(platformSize/2, platformThickness/2, platformSize/2));
   const body = new CANNON.Body({ mass: 0 }); // Static body
   body.addShape(shape);
-  body.position.set(0, -platformThickness/2, 0); // Position slightly below Y=0
-  
+  body.position.set(0, -platformThickness/2, 0); // Position to match mesh
+
   return { mesh, body };
 }
-
 
 // Render loop
 function startRenderLoop() {
@@ -107,7 +187,7 @@ function startRenderLoop() {
     
     if (!isGameRunning) return;
     
-    // Update physics
+    // Update physics with simple fixed timestep
     physicsWorld.step(1/60);
     
     // Sync physics bodies with Three.js meshes
@@ -121,6 +201,11 @@ function startRenderLoop() {
     
     // Check for tower fall
     checkTowerStability();
+    
+    // Update game score and check win conditions
+    if (cubes.length > 0) {
+      updateScore();
+    }
   }
   
   animate();
@@ -128,12 +213,12 @@ function startRenderLoop() {
 
 // Check if tower has fallen
 function checkTowerStability() {
-  const fallenCubes = cubes.filter(cube => 
+  const fallenCubes = cubes.filter(cube =>
     cube.body.position.y < -3 || // Fallen well below platform level
-    Math.abs(cube.body.position.x) > 3.5 || // Fallen beyond platform edges with buffer
-    Math.abs(cube.body.position.z) > 3.5    // Fallen beyond platform edges with buffer
+    Math.abs(cube.body.position.x) > 3.0 || // Fallen beyond platform edges with buffer (5/2 + 0.5)
+    Math.abs(cube.body.position.z) > 3.0    // Fallen beyond platform edges with buffer (5/2 + 0.5)
   );
-  
+
   if (fallenCubes.length > 0) {
     console.log('Game Over! Cube(s) fell off the platform:', fallenCubes.length);
     showRestartButton();
@@ -239,13 +324,20 @@ window.restartGame = function() {
   // Clear registered meshes for UI
   clearRegisteredMeshes();
   
+  // Reset game state
+  gameScore = 0;
+  currentLevel = 1;
+  targetWeight = 8;
+  gameStartTime = Date.now();
+  isGameWon = false;
+  
   // Hide restart button
   hideRestartButton();
   
   // Resume game
   isGameRunning = true;
   
-  console.log('Game restarted!');
+  console.log('Game restarted! Starting Level 1 - Target Weight: 8');
 };
 
 // Add keyboard controls
@@ -258,6 +350,266 @@ document.addEventListener('keydown', (event) => {
     console.log('Game restarted via R key');
   }
 });
+
+// Game mechanics functions
+function calculateTowerWeight() {
+  if (cubes.length === 0) return 0;
+  
+  // Check if all cubes have stabilized (not moving much)
+  if (!areAllCubesStabilized()) {
+    return 0; // Don't count weight until everything is stable
+  }
+  
+  // Only count cubes that are part of towers with 2+ cubes
+  const platformTolerance = 0.5;
+  
+  // Group cubes into towers based on proximity
+  const towers = [];
+  const processedCubes = new Set();
+  
+  cubes.forEach(cube => {
+    if (processedCubes.has(cube) || cube.body.position.y < -platformTolerance) return;
+    
+    // Start a new tower with this cube
+    const tower = [cube];
+    processedCubes.add(cube);
+    
+    // Find all cubes that are stacked on top of this one
+    let foundMore = true;
+    while (foundMore) {
+      foundMore = false;
+      cubes.forEach(otherCube => {
+        if (processedCubes.has(otherCube) || otherCube.body.position.y < -platformTolerance) return;
+        
+        // Check if this cube is stacked on any cube in the current tower
+        tower.forEach(towerCube => {
+          const distance = Math.sqrt(
+            Math.pow(towerCube.body.position.x - otherCube.body.position.x, 2) +
+            Math.pow(towerCube.body.position.z - otherCube.body.position.z, 2)
+          );
+          
+          // If cubes are close horizontally and one is above the other
+          if (distance < 0.8 && Math.abs(otherCube.body.position.y - towerCube.body.position.y) > 0.3) {
+            tower.push(otherCube);
+            processedCubes.add(otherCube);
+            foundMore = true;
+          }
+        });
+      });
+    }
+    
+    // Only count towers with 2 or more cubes
+    if (tower.length >= 2) {
+      towers.push(tower);
+    }
+  });
+  
+  if (towers.length === 0) return 0;
+  
+  // Find the highest tower (by total height, not just cube count)
+  let highestTower = null;
+  let maxTowerHeight = 0;
+  
+  towers.forEach(tower => {
+    let towerHeight = 0;
+    let towerWeight = 0;
+    
+    tower.forEach(cube => {
+      towerHeight = Math.max(towerHeight, cube.body.position.y + (cube.weight * 0.1));
+      towerWeight += cube.weight;
+    });
+    
+    if (towerHeight > maxTowerHeight) {
+      maxTowerHeight = towerHeight;
+      highestTower = tower;
+    }
+  });
+  
+  // Return weight of only the highest tower
+  if (highestTower) {
+    const totalWeight = highestTower.reduce((total, cube) => total + cube.weight, 0);
+    console.log(`🏗️ Found ${towers.length} towers, tallest has ${highestTower.length} cubes, weight: ${totalWeight}`);
+    return totalWeight;
+  }
+  
+  return 0;
+}
+
+function areAllCubesStabilized() {
+  if (cubes.length === 0) return true;
+  
+  const velocityThreshold = 0.5; // Cubes are stable if moving slower than this
+  const angularVelocityThreshold = 0.3; // Cubes are stable if rotating slower than this
+  
+  return cubes.every(cube => {
+    const velocity = cube.body.velocity.length();
+    const angularVelocity = cube.body.angularVelocity.length();
+    
+    return velocity < velocityThreshold && angularVelocity < angularVelocityThreshold;
+  });
+}
+
+function calculateTowerHeight() {
+  if (cubes.length === 0) return 0;
+  
+  let maxHeight = 0;
+  cubes.forEach(cube => {
+    // Only count cubes that are on or above the platform level
+    if (cube.body.position.y >= -0.5) {
+      const height = cube.body.position.y + (cube.weight * 0.1); // Add cube size
+      maxHeight = Math.max(maxHeight, height);
+    }
+  });
+  
+  return maxHeight;
+}
+
+function calculateTowerStability() {
+  if (cubes.length === 0) return 0;
+  
+  // Calculate center of mass
+  let totalMass = 0;
+  let weightedX = 0, weightedY = 0, weightedZ = 0;
+  
+  cubes.forEach(cube => {
+    const mass = cube.weight;
+    totalMass += mass;
+    weightedX += cube.body.position.x * mass;
+    weightedY += cube.body.position.y * mass;
+    weightedZ += cube.body.position.z * mass;
+  });
+  
+  const centerOfMass = {
+    x: weightedX / totalMass,
+    y: weightedY / totalMass,
+    z: weightedZ / totalMass
+  };
+  
+  // Stability based on how close center of mass is to platform center
+  const distanceFromCenter = Math.sqrt(centerOfMass.x * centerOfMass.x + centerOfMass.z * centerOfMass.z);
+  const maxDistance = 2.5; // Platform radius (5/2)
+  const stability = Math.max(0, 1 - (distanceFromCenter / maxDistance));
+  
+  return stability;
+}
+
+function updateScore() {
+  const currentWeight = calculateTowerWeight();
+  const height = calculateTowerHeight();
+  const stability = calculateTowerStability();
+  
+  // Score based on weight achieved (more intuitive than height)
+  const weightScore = currentWeight * 10; // 10 points per weight unit
+  const stabilityBonus = Math.floor(stability * 50); // Up to 50 bonus points
+  const efficiencyBonus = Math.floor((cubes.length > 0 ? 100 / cubes.length : 0)); // Fewer cubes = more points
+  
+  gameScore = weightScore + stabilityBonus + efficiencyBonus;
+  
+  // Update UI display
+  updateGameUI(currentWeight, stability);
+  
+  // Check win condition - based on weight total, not height
+  if (currentWeight >= targetWeight && !isGameWon) {
+    isGameWon = true;
+    console.log(`🎉 Level ${currentLevel} Complete! Weight: ${currentWeight}, Score: ${gameScore}`);
+    showLevelComplete();
+  }
+  
+  return { weight: currentWeight, height, stability, score: gameScore };
+}
+
+function updateGameUI(currentWeight, stability) {
+  const levelDisplay = document.querySelector('#levelDisplay .metric-value');
+  const targetDisplay = document.querySelector('#targetDisplay .metric-value');
+  const scoreDisplay = document.querySelector('#scoreDisplay .metric-value');
+  const heightDisplay = document.querySelector('#heightDisplay .metric-value');
+  
+  if (levelDisplay) levelDisplay.textContent = currentLevel;
+  if (targetDisplay) targetDisplay.textContent = targetWeight;
+  if (scoreDisplay) scoreDisplay.textContent = gameScore;
+  
+  // Show weight or stabilization status
+  if (heightDisplay) {
+    if (cubes.length > 0 && !areAllCubesStabilized()) {
+      heightDisplay.textContent = "⏳"; // Sandglass emoji
+      heightDisplay.style.color = "#ffa500"; // Orange for stabilizing
+    } else {
+      heightDisplay.textContent = currentWeight;
+      heightDisplay.style.color = "#4CAF50"; // Green for stable
+    }
+  }
+}
+
+function showLevelComplete() {
+  const currentWeight = calculateTowerWeight();
+  const height = calculateTowerHeight();
+  const stability = calculateTowerStability();
+  
+  console.log(`🎉 LEVEL ${currentLevel} COMPLETE! 🎉`);
+  console.log(`Final Weight: ${currentWeight} units`);
+  console.log(`Final Height: ${height.toFixed(1)} units`);
+  console.log(`Stability: ${(stability * 100).toFixed(1)}%`);
+  console.log(`Final Score: ${gameScore}`);
+  
+  // Advance to next level
+  currentLevel++;
+  targetWeight = 8 + (currentLevel - 1) * 3; // Progressive weight targets: 8, 11, 14, 17...
+  isGameWon = false;
+  gameScore = 0;
+  
+  console.log(`Starting Level ${currentLevel} - Target Weight: ${targetWeight}`);
+  
+  // Show objective for next level
+  showLevelObjective();
+}
+
+function showLevelObjective() {
+  const objectiveOverlay = document.getElementById('levelObjective');
+  const objectiveTitle = document.getElementById('objectiveTitle');
+  const objectiveText = document.getElementById('objectiveText');
+  const objectiveHint = document.getElementById('objectiveHint');
+  
+  if (!objectiveOverlay || !objectiveTitle || !objectiveText || !objectiveHint) return;
+  
+  // Update objective content
+  objectiveTitle.textContent = `Level ${currentLevel}`;
+  objectiveText.textContent = `Build a tower with ${targetWeight} total weight!`;
+  
+  // Add level-specific hints
+  if (currentLevel === 1) {
+    objectiveHint.textContent = "Build your highest tower! Only the tallest tower counts after all cubes stabilize.";
+  } else if (currentLevel === 2) {
+    objectiveHint.textContent = "Focus on one impressive tower - multiple small towers won't help you.";
+  } else if (currentLevel === 3) {
+    objectiveHint.textContent = "Build tall and stable - use heavier cubes at the bottom for better balance.";
+  } else {
+    objectiveHint.textContent = "Master the art of building one perfect tower!";
+  }
+  
+  // Show overlay
+  objectiveOverlay.classList.remove('hidden');
+  objectiveOverlay.classList.add('show');
+  
+  // Auto-hide after 6 seconds (longer since there's now an OK button)
+  setTimeout(() => {
+    hideLevelObjective();
+  }, 6000);
+}
+
+function hideLevelObjective() {
+  const objectiveOverlay = document.getElementById('levelObjective');
+  if (!objectiveOverlay) return;
+  
+  objectiveOverlay.classList.remove('show');
+  
+  // Hide completely after transition
+  setTimeout(() => {
+    objectiveOverlay.classList.add('hidden');
+  }, 500);
+}
+
+// Make hideLevelObjective globally accessible
+window.hideLevelObjective = hideLevelObjective;
 
 // Handle window resize
 function onWindowResize() {

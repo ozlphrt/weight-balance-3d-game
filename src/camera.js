@@ -12,7 +12,7 @@ export function setupCamera(renderer) {
   );
   
   // Position camera for optimal game view - centered on platform
-  camera.position.set(0, 8, 8);
+  camera.position.set(0, 6, 6);
   camera.lookAt(0, 0, 0); // Look at center of platform
   
   // Setup orbit controls
@@ -32,7 +32,7 @@ function setupOrbitControls(camera, renderer) {
   let currentPanX = 0, currentPanY = 0;
   
   // Camera orbit parameters
-  let radius = 10; // Distance from center
+  let radius = 8; // Distance from center
   const minRadius = 3;
   const maxRadius = 25;
   const target = new THREE.Vector3(0, 0, 0); // Target center of platform
