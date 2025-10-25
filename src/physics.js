@@ -29,6 +29,12 @@ export function createPhysicsWorld() {
   world.addContactMaterial(defaultContactMaterial);
   world.defaultContactMaterial = defaultContactMaterial;
   
+  // Add collision event listener for realistic sound effects
+  world.addEventListener('postStep', () => {
+    // Check for collisions and play appropriate sounds
+    checkCollisions(world);
+  });
+  
   return world;
 }
 
@@ -50,6 +56,9 @@ export function createCubePhysicsBody(weight, position) {
   body.addShape(shape);
   body.position.set(position.x, position.y, position.z);
   
+  // Store weight data for collision sound effects
+  body.userData = { weight: weight };
+  
   // Set material properties
   body.material.friction = 0.4;
   body.material.restitution = 0.2;
@@ -65,4 +74,63 @@ export function createPlatformPhysicsBody() {
   body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
   
   return body;
+}
+
+// Collision detection for realistic sound effects
+let lastCollisionTime = 0;
+const collisionCooldown = 100; // Minimum time between collision sounds (ms)
+
+function checkCollisions(world) {
+  const currentTime = Date.now();
+  
+  // Only check for collisions every few frames to avoid spam
+  if (currentTime - lastCollisionTime < collisionCooldown) {
+    return;
+  }
+  
+  // Get all bodies in the world
+  const bodies = world.bodies;
+  
+  for (let i = 0; i < bodies.length; i++) {
+    const bodyA = bodies[i];
+    
+    // Skip static bodies (platform)
+    if (bodyA.mass === 0) continue;
+    
+    // Check if body is moving fast enough to make sound
+    const velocity = bodyA.velocity.length();
+    if (velocity < 0.5) continue; // Only play sounds for significant movement
+    
+    for (let j = i + 1; j < bodies.length; j++) {
+      const bodyB = bodies[j];
+      
+      // Skip static bodies
+      if (bodyB.mass === 0) continue;
+      
+      // Check if bodies are close enough to potentially collide
+      const distance = bodyA.position.distanceTo(bodyB.position);
+      const minDistance = 0.8; // Minimum distance for collision sound
+      
+      if (distance < minDistance) {
+        // Calculate impact force based on relative velocity
+        const relativeVelocity = bodyA.velocity.clone().vsub(bodyB.velocity);
+        const impactForce = relativeVelocity.length();
+        
+        // Only play sound for significant impacts
+        if (impactForce > 1.0) {
+          // Get cube weights from body userData or estimate from mass
+          const weightA = bodyA.userData?.weight || bodyA.mass;
+          const weightB = bodyB.userData?.weight || bodyB.mass;
+          
+          
+          lastCollisionTime = currentTime;
+          break; // Only one collision sound per frame
+        }
+      }
+    }
+    
+    if (currentTime - lastCollisionTime < collisionCooldown) {
+      break; // Exit outer loop if we just played a sound
+    }
+  }
 }

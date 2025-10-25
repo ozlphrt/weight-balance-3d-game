@@ -1,5 +1,6 @@
 // Weight Balance - UI Management (Color Schemes & FPS Counter)
 import * as THREE from 'three';
+// import { audioManager } from './audio.js';
 
 // Color scheme definitions
 export const COLOR_SCHEMES = {
@@ -181,6 +182,9 @@ export function changeColorScheme(schemeName) {
   
   currentColorScheme = schemeName;
   const scheme = COLOR_SCHEMES[schemeName];
+  
+  // Play UI click sound
+  // audioManager.playUIClick();
   
   console.log(`Changing to color scheme: ${scheme.name}`);
   

@@ -8,6 +8,7 @@ import { createCube, loadCubeModel } from './cubes.js';
 import { setupPlacement } from './placement.js';
 import { showRestartButton, hideRestartButton } from './utils.js';
 import { initializeUI, changeColorScheme, clearRegisteredMeshes } from './ui.js';
+// import { audioManager } from './audio.js';
 
 // Global application state
 let scene, renderer, camera, physicsWorld;
@@ -235,6 +236,12 @@ function checkTowerStability() {
 
   if (fallenCubes.length > 0) {
     console.log('Game Over! Cube(s) fell off the platform:', fallenCubes.length);
+    
+    // Play collapse sounds
+    // audioManager.playCollapse('start');
+    // setTimeout(() => audioManager.playCollapse('cascade'), 200);
+    // setTimeout(() => audioManager.playGameOver(), 800);
+    
     showRestartButton();
     isGameRunning = false;
   }
@@ -245,6 +252,10 @@ function onCubePlaced(cube) {
   cubes.push(cube);
   scene.add(cube.mesh);
   physicsWorld.addBody(cube.body);
+  
+  // Play placement sound
+  // audioManager.playCubePlacement(cube.weight);
+  
   console.log(`Cube placed: weight ${cube.weight}`);
 }
 
@@ -555,10 +566,17 @@ function updateScore() {
   // Update UI display
   updateGameUI(currentWeight, stability);
   
+  // Play structure strain sounds based on stability
+  // audioManager.playStructureStrain(stability);
+  
   // Check win condition - based on weight total, not height
   if (currentWeight >= targetWeight && !isGameWon) {
     isGameWon = true;
     console.log(`🎉 Level ${currentLevel} Complete! Weight: ${currentWeight}, Score: ${gameScore}`);
+    
+    // Play level complete sound
+    // audioManager.playLevelComplete();
+    
     showLevelComplete();
   }
   
