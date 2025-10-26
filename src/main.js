@@ -4,7 +4,7 @@ import * as CANNON from 'cannon-es';
 import { createScene } from './scene.js';
 import { createPhysicsWorld } from './physics.js';
 import { setupCamera } from './camera.js';
-import { createCube, loadCubeModel } from './cubes.js';
+import { createCube } from './cubes.js';
 import { setupPlacement } from './placement.js';
 import { showRestartButton, hideRestartButton } from './utils.js';
 import { initializeUI, changeColorScheme, clearRegisteredMeshes } from './ui.js';
@@ -32,10 +32,6 @@ async function init() {
   console.log('Initializing Weight Balance...');
   
   try {
-    // Load cube model first
-    console.log('Loading cube model...');
-    await loadCubeModel();
-    
     // Create Three.js scene
     scene = createScene();
     

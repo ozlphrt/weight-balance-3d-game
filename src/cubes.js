@@ -1,6 +1,5 @@
 // Weight Balance - Cube Creation & Management
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createCubePhysicsBody } from './physics.js';
 import { registerCubeMesh, getCurrentColorScheme } from './ui.js';
 
@@ -18,34 +17,7 @@ const WEIGHT_SIZES = {
   5: 0.8  // Largest
 };
 
-// GLTF loader instance
-const gltfLoader = new GLTFLoader();
-let cubeModel = null;
-
-// Load the cube model
-export async function loadCubeModel() {
-  return new Promise((resolve, reject) => {
-    gltfLoader.load(
-      './round_cube/scene.gltf',
-      (gltf) => {
-        cubeModel = gltf.scene;
-        console.log('Cube model loaded successfully');
-        console.log('Model structure:', cubeModel);
-        console.log('Model children:', cubeModel.children);
-        console.log('Model position:', cubeModel.position);
-        console.log('Model scale:', cubeModel.scale);
-        resolve(gltf.scene);
-      },
-      (progress) => {
-        console.log('Loading cube model...', (progress.loaded / progress.total * 100) + '%');
-      },
-      (error) => {
-        console.error('Error loading cube model:', error);
-        reject(error);
-      }
-    );
-  });
-}
+// Cube model loading removed - using fallback geometry
 
 // Create a cube with specified weight and position
 export function createCube(weight, position) {
@@ -72,67 +44,12 @@ export function createCube(weight, position) {
   };
 }
 
-// Create Three.js mesh for cube using GLTF model
+// Create Three.js mesh for cube using basic geometry
 function createCubeMesh(weight) {
-  // Temporarily use fallback geometry until GLTF model is working
-  console.log('Using fallback geometry for now');
   return createFallbackCubeMesh(weight);
-  
-  // TODO: Re-enable GLTF model once debugging is complete
-  /*
-  if (!cubeModel) {
-    console.warn('Cube model not loaded, falling back to basic geometry');
-    return createFallbackCubeMesh(weight);
-  }
-  
-  // Clone the GLTF model
-  const mesh = cubeModel.clone();
-  
-  // Scale the mesh based on weight
-  const size = WEIGHT_SIZES[weight];
-  mesh.scale.setScalar(size);
-  
-  // Debug: Log mesh information
-  console.log('Created mesh from GLTF model:', mesh);
-  console.log('Mesh children count:', mesh.children.length);
-  
-  // Apply color to all materials in the model
-  mesh.traverse((child) => {
-    if (child.isMesh) {
-      console.log('Found mesh child:', child);
-      console.log('Child material:', child.material);
-      
-      // Update material color
-      if (child.material) {
-        // Handle different material types
-        if (child.material.color) {
-          child.material.color.setHex(getWeightColors()[weight]);
-          console.log('Set color to:', getWeightColors()[weight]);
-        }
-        
-        // Set material properties safely
-        child.material.shininess = 30;
-        if (child.material.specular) {
-          child.material.specular.setHex(0x222222);
-        }
-        child.material.transparent = true;
-        child.material.opacity = 0.95;
-        
-        // Ensure material is updated
-        child.material.needsUpdate = true;
-      }
-      
-      // Enable shadows
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
-  });
-  
-  return mesh;
-  */
 }
 
-// Fallback function for when GLTF model isn't loaded
+// Create cube mesh with basic geometry
 function createFallbackCubeMesh(weight) {
   const size = WEIGHT_SIZES[weight];
   const geometry = new THREE.BoxGeometry(size, size, size);
