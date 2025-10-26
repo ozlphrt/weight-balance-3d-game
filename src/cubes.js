@@ -26,7 +26,7 @@ let cubeModel = null;
 export async function loadCubeModel() {
   return new Promise((resolve, reject) => {
     gltfLoader.load(
-      '/round_cube/scene.gltf',
+      './round_cube/scene.gltf',
       (gltf) => {
         cubeModel = gltf.scene;
         console.log('Cube model loaded successfully');
