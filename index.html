@@ -2,44 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weight Balance - 3D Physics Puzzle Game</title>
-  <meta http-equiv="refresh" content="0; url=./dist/">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    .loading {
-      text-align: center;
-    }
-    .spinner {
-      border: 4px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top: 4px solid white;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Weight Balance - 3D Physics Puzzle Game</title>
+  <script type="module" crossorigin src="/weight-balance-3d-game/assets/index-DnJObo7-.js"></script>
+  <link rel="stylesheet" crossorigin href="/weight-balance-3d-game/assets/index-Cr5ZJNiM.css">
 </head>
 <body>
-  <div class="loading">
-    <h1>Weight Balance</h1>
-    <div class="spinner"></div>
-    <p>Loading your 3D physics puzzle game...</p>
-    <p><a href="./dist/" style="color: white;">Click here if you're not redirected automatically</a></p>
-  </div>
+  <div id="app">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui">
+      <div id="controls">
+        <div id="gameInfo">
+          <div id="levelDisplay">
+            <div class="metric-label">Level</div>
+            <div class="metric-value metric-highlight">1</div>
+          </div>
+                  <div id="heightDisplay">
+                    <div class="metric-label">Weight</div>
+                    <div class="metric-value">0</div>
+                  </div>
+                  <div id="targetDisplay">
+                    <div class="metric-label">Target</div>
+                    <div class="metric-value">8</div>
+                  </div>
+          <div id="scoreDisplay">
+            <div class="metric-label">Score</div>
+            <div class="metric-value metric-highlight">0</div>
+          </div>
+        </div>
+        <div id="colorSchemeSelector">
+          <label for="colorScheme">Color Scheme:</label>
+          <select id="colorScheme" onchange="changeColorScheme(this.value)">
+            <option value="professional">Professional Gaming</option>
+            <option value="weight">Weight Progression</option>
+            <option value="material">Material Design</option>
+            <option value="monochrome">Monochromatic</option>
+            <option value="neon">Neon Cyberpunk</option>
+            <option value="earth">Earth Tones</option>
+            <option value="ocean">Ocean Depths</option>
+            <option value="sunset">Sunset Gradient</option>
+            <option value="forest">Forest Green</option>
+            <option value="royal">Royal Purple</option>
+          </select>
+        </div>
+      </div>
+      <div id="restartButton" class="hidden">
+        <button onclick="restartGame()">Restart</button>
+      </div>
+      <div id="levelObjective" class="hidden">
+        <div id="objectiveContent">
+          <h2 id="objectiveTitle">Level 1</h2>
+          <p id="objectiveText">Build a tower 3.0 units high!</p>
+          <p id="objectiveHint">Use cubes strategically to reach the target height.</p>
+          <button id="objectiveOK" onclick="console.log('OK button clicked!'); hideLevelObjective();">OK</button>
+        </div>
+      </div>
+      <div id="fpsCounter">FPS: --</div>
+    </div>
+  </div>
 </body>
 </html>
