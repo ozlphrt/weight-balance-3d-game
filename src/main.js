@@ -90,7 +90,7 @@ async function init() {
 // Create the base platform
 function createPlatform() {
   // Three.js mesh with rounded box geometry
-  const platformSize = 5; // Back to original size
+  const platformSize = 6; // Increased by 20% (5 * 1.2 = 6)
   const platformThickness = 0.3; // Increased thickness for better visual appeal
   const cornerRadius = 0.5; // Rounded corners
   
@@ -226,8 +226,8 @@ function startRenderLoop() {
 function checkTowerStability() {
   const fallenCubes = cubes.filter(cube =>
     cube.body.position.y < -3 || // Fallen well below platform level
-    Math.abs(cube.body.position.x) > 3.0 || // Fallen beyond platform edges with buffer (5/2 + 0.5)
-    Math.abs(cube.body.position.z) > 3.0    // Fallen beyond platform edges with buffer (5/2 + 0.5)
+    Math.abs(cube.body.position.x) > 3.5 || // Fallen beyond platform edges with buffer (6/2 + 0.5)
+    Math.abs(cube.body.position.z) > 3.5    // Fallen beyond platform edges with buffer (6/2 + 0.5)
   );
 
   if (fallenCubes.length > 0) {
@@ -541,7 +541,7 @@ function calculateTowerStability() {
   
   // Stability based on how close center of mass is to platform center
   const distanceFromCenter = Math.sqrt(centerOfMass.x * centerOfMass.x + centerOfMass.z * centerOfMass.z);
-  const maxDistance = 2.5; // Platform radius (5/2)
+  const maxDistance = 3.0; // Platform radius (6/2)
   const stability = Math.max(0, 1 - (distanceFromCenter / maxDistance));
   
   return stability;
