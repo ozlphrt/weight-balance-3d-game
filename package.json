@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/weight-balance-game/",
+    "build": "vite build --base=/weight-balance-3d-game/",
     "preview": "vite preview"
   },
   "keywords": ["3d-game", "physics-simulation", "threejs", "cannon-es", "puzzle-game"],
